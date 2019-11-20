@@ -10,6 +10,8 @@
 //      4 easy to read upside down.
 // - Only I, X, C, and M are allowed to be represented several times in a row:
 //      LL should be C; DD should be M
+// - If a certain sequence can be represented with another symbol, it is illegal:
+//      LC should be L;
 //
 // The input is expected to be ASCII, although there exist unicode characters
 // for roman numerals. Apostrophus and Vinculum are not supported.
@@ -78,6 +80,9 @@ fn convert(roman: String) -> Result<u64, Box<dyn Error>> {
         } else if current == buffer[2] && (current == 50 || current == 500) {
             return Err("Invalid sequence".into());
         } else if current < buffer[2] {
+            if buffer[2] - current == current {
+                return Err("Invalid sequence".into());
+            }
             value -= current;
         } else {
             value += current;
@@ -151,6 +156,10 @@ mod tests {
         assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
 
         let x = convert("XXC".to_string());
+        assert!(x.is_err());
+        assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
+
+        let x = convert("LC".to_string());
         assert!(x.is_err());
         assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
     }
