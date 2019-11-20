@@ -8,6 +8,8 @@
 // - But IIII is fine:
 //      This is typically used by watchmakers to make the reading of the number
 //      4 easy to read upside down.
+// - Only I, X, C, and M are allowed to be represented several times in a row:
+//      LL should be C; DD should be M
 //
 // The input is expected to be ASCII, although there exist unicode characters
 // for roman numerals. Apostrophus and Vinculum are not supported.
@@ -73,6 +75,8 @@ fn convert(roman: String) -> Result<u64, Box<dyn Error>> {
             return Err("Invalid sequence".into());
         } else if buffer.iter().all(|&item| item == current) {
             return Err("Invalid sequence".into());
+        } else if current == buffer[2] && (current == 50 || current == 500) {
+            return Err("Invalid sequence".into());
         } else if current < buffer[2] {
             value -= current;
         } else {
@@ -104,15 +108,15 @@ mod tests {
     fn test_string_cases() {
         let x = convert("iv".to_string());
         assert!(x.is_ok());
-        assert_eq!(4, x.unwrap());
+        assert_eq!(x.unwrap(), 4);
 
         let x = convert("LIX".to_string());
         assert!(x.is_ok());
-        assert_eq!(59, x.unwrap());
+        assert_eq!(x.unwrap(), 59);
 
         let x = convert("CvL".to_string());
         assert!(x.is_ok());
-        assert_eq!(145, x.unwrap());
+        assert_eq!(x.unwrap(), 145);
     }
 
     #[test]
@@ -154,7 +158,7 @@ mod tests {
     #[test]
     fn test_valid_input_range() {
         let x = convert("XCIX".to_string());
-        assert_eq!(99, x.unwrap());
+        assert_eq!(x.unwrap(), 99);
 
         let x = convert("MCMLXXXIV".to_string());
         assert_eq!(x.unwrap(), 1984);
@@ -169,13 +173,40 @@ mod tests {
     #[test]
     fn test_four_same_symbols() {
         let x = convert("IIII".to_string());
-        assert_eq!(4, x.unwrap());
+        assert_eq!(x.unwrap(), 4);
 
         let x = convert("XXXX".to_string());
         assert!(x.is_err());
         assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
 
         let x = convert("VIIII".to_string());
+        assert!(x.is_err());
+        assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
+    }
+
+    #[test]
+    fn test_double_symbols() {
+        let x = convert("MM".to_string());
+        assert!(x.is_ok());
+        assert_eq!(x.unwrap(), 2000);
+
+        let x = convert("CC".to_string());
+        assert!(x.is_ok());
+        assert_eq!(x.unwrap(), 200);
+
+        let x = convert("XX".to_string());
+        assert!(x.is_ok());
+        assert_eq!(x.unwrap(), 20);
+
+        let x = convert("II".to_string());
+        assert!(x.is_ok());
+        assert_eq!(x.unwrap(), 2);
+
+        let x = convert("LL".to_string());
+        assert!(x.is_err());
+        assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
+
+        let x = convert("DD".to_string());
         assert!(x.is_err());
         assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
     }
