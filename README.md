@@ -15,8 +15,7 @@ There are a few rules to observe in checking the validity of a roman number:
 - If a certain sequence can be represented with another symbol, it is illegal:
     `LC` should be `L`
 
-The input is expected to be ASCII, although there exist unicode characters
-for roman numerals. Apostrophus and Vinculum are not supported.
+Although unicode characters exist, Apostrophus and Vinculum are not supported.
 
 ## Conversion from Arabic numerals
 Due to the rule limiting 4 consecutive Roman numerals, the greatest Arabic
@@ -33,6 +32,12 @@ From the command line, use so:
 
     $ numerals 198
     CXCVIII
+
+    $ numerals ⅬⅡ
+    52
+
+# TODO
+[ ] Unicode output option when converting from arabic numerals.
 
 # Known issues
 Any value ending in `9`, short of `9` itself, will accept invalid input or

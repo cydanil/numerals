@@ -13,21 +13,35 @@
 // - If a certain sequence can be represented with another symbol, it is illegal:
 //      LC should be L;
 //
-// The input is expected to be ASCII, although there exist unicode characters
-// for roman numerals. Apostrophus and Vinculum are not supported.
+// Although unicode caracter exist, Apostrophus and Vinculum are not supported.
 
 use std::collections::{BTreeSet, HashMap, VecDeque};
 use std::error::Error;
 
 lazy_static! {
     static ref ROMAN_TO_ARABIC: HashMap<char, u64> = [
-        ('I', 1),
-        ('V', 5),
-        ('X', 10),
-        ('L', 50),
-        ('C', 100),
-        ('D', 500),
-        ('M', 1000)
+        ('I', 1),  // ascii
+        ('Ⅰ', 1),  // unicode
+        ('Ⅱ', 2),
+        ('Ⅲ', 3),
+        ('Ⅳ', 4),
+        ('V', 5),  // ascii
+        ('Ⅴ', 5),  // unicode
+        ('Ⅵ', 6),
+        ('Ⅶ', 7),
+        ('Ⅷ', 8),
+        ('Ⅸ', 9),
+        ('X', 10),  // ascii
+        ('Ⅹ', 10),  // unicode
+        ('Ⅺ', 11),
+        ('L', 50),  // ascii
+        ('Ⅼ', 50),  // unicode
+        ('C', 100),  // ascii
+        ('Ⅽ', 100),  // unicode
+        ('D', 500),  // ascii
+        ('Ⅾ', 500),  // unicode
+        ('M', 1000),  // ascii
+        ('Ⅿ', 1000),  // unicode
     ]
     .iter()
     .cloned()
@@ -70,12 +84,12 @@ pub fn to_roman(input: u64) -> Result<String, Box<dyn Error>> {
 }
 
 pub fn to_arabic(roman: String) -> Result<u64, Box<dyn Error>> {
-    let roman = roman.to_ascii_uppercase();
+    let roman = roman.to_uppercase();
     if roman.is_empty() {
         return Err("Invalid empty string".into());
     }
 
-    if roman == "IIII" {
+    if roman == "IIII" || roman == "ⅠⅠⅠⅠ" {
         // Having four additions in a row is illegal, short of the sequence IIII
         return Ok(4u64);
     }
@@ -159,6 +173,7 @@ mod test_to_arabic {
 
     #[test]
     fn test_string_cases() {
+        // ASCII
         let x = to_arabic("iv".to_string());
         assert!(x.is_ok());
         assert_eq!(x.unwrap(), 4);
@@ -168,6 +183,19 @@ mod test_to_arabic {
         assert_eq!(x.unwrap(), 59);
 
         let x = to_arabic("CvL".to_string());
+        assert!(x.is_ok());
+        assert_eq!(x.unwrap(), 145);
+
+        // Unicode
+        let x = to_arabic("ⅳ".to_string());
+        assert!(x.is_ok());
+        assert_eq!(x.unwrap(), 4);
+
+        let x = to_arabic("ⅬⅨ".to_string());
+        assert!(x.is_ok());
+        assert_eq!(x.unwrap(), 59);
+
+        let x = to_arabic("ⅭⅴⅬ".to_string());
         assert!(x.is_ok());
         assert_eq!(x.unwrap(), 145);
     }
