@@ -98,7 +98,7 @@ mod test_to_roman {
         assert_eq!(x.unwrap(), "MCMXCIX".to_string());
 
         let x = to_roman(99u64);
-        assert_eq!(x.unwrap(), "IC".to_string());
+        assert_eq!(x.unwrap(), "XCIX".to_string());
     }
 }
 
@@ -216,10 +216,6 @@ mod test_to_arabic {
         assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
 
         let x = to_arabic("LDVX".to_string());
-        assert!(x.is_err());
-        assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
-
-        let x = to_arabic("XCIX".to_string());
         assert!(x.is_err());
         assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
     }

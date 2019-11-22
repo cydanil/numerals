@@ -39,3 +39,17 @@ Any value ending in `9`, short of `9` itself, will accept invalid input or
 return invalid output.  
 For instance, the value `XCIX` is accepted and returned as 99, although it
 should reject it and return `IC`.
+
+However, according to this [infoplease page](https://www.infoplease.com/askeds/1999-roman-numerals):
+
+    According to librarians at NIST, while MIM is more convenient, MCMXCIX is
+    favored because of earlier precedents with numbers such as 49 (written as
+    XLIX rather than IL); however, the librarians point out that purists use
+    neither MIM nor MCMXCIX, opting instead for MCMXCVIIII. The ancient Romans,
+    they explain, did not use the 20th century convention of IX for the number
+    nine.
+    
+    -The Editors
+
+This means that in classical Roman numerals, 4 identical consecutive numerals
+are allowed, which would change the allowed range from 3999 to 4999.
