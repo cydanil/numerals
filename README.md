@@ -1,5 +1,5 @@
 # Numerals
-This little utility converts valid Roman numerals to Arabic, and vice-versa
+This little utility converts valid Roman numerals to Arabic, and vice-versa.
 
 ## Conversion from Roman numerals
 There are a few rules to observe in checking the validity of a roman number:
