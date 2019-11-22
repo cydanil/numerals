@@ -1,9 +1,9 @@
-// Convert roman numerals to arabic.
+// Convert roman numerals to arabic, and vice-versa.
 //
 // There are a few rules to observe in checking the validity of a roman number:
 // - Having two subtraction in a row is illegal:
 //      IXC does not equal 91 (C - (X - I))
-// - Having four similar numerals in a rwo is illegal:
+// - Having four similar numerals in a row is illegal:
 //      400 should be written as CD (D - C), rather than CCCC
 // - But IIII is fine:
 //      This is typically used by watchmakers to make the reading of the number
@@ -37,9 +37,72 @@ lazy_static! {
     .cloned()
     .collect();
     static ref NUMERALS: BTreeSet<char> = ROMAN_TO_ARABIC.keys().cloned().collect();
+    static ref ARABIC_TO_ROMAN: Vec<(u64, &'static str)> = vec![
+        (1000, "M"),
+        (900, "CM"),
+        (500, "D"),
+        (400, "CD"),
+        (100, "C"),
+        (90, "XC"),
+        (50, "L"),
+        (40, "XL"),
+        (10, "X"),
+        (9, "IX"),
+        (5, "V"),
+        (4, "IV"),
+        (1, "I"),
+    ];
 }
 
-fn convert(roman: String) -> Result<u64, Box<dyn Error>> {
+fn to_roman(input: u64) -> Result<String, Box<dyn Error>> {
+    let mut input = input;
+    if input < 1 || input > 3999 {
+        return Err(format!(
+            "The value should be between 1 and 3999 inclusive, not {}",
+            input
+        )
+        .into());
+    }
+    let mut ret = String::new();
+    for (arabic, roman) in ARABIC_TO_ROMAN.iter() {
+        while input % arabic < input {
+            ret += roman;
+            input -= arabic;
+        }
+    }
+    Ok(ret)
+}
+
+#[cfg(test)]
+mod test_to_roman {
+    use super::to_roman;
+
+    #[test]
+    fn test_invalid_inputs() {
+        let x = to_roman(0u64);
+        assert!(x.is_err());
+
+        let x = to_roman(1u64);
+        assert!(x.is_ok());
+
+        let x = to_roman(3999u64);
+        assert!(x.is_ok());
+
+        let x = to_roman(4000u64);
+        assert!(x.is_err());
+    }
+
+    #[test]
+    fn test_valid_inputs() {
+        let x = to_roman(1999u64);
+        assert_eq!(x.unwrap(), "MCMXCIX".to_string());
+
+        let x = to_roman(99u64);
+        assert_eq!(x.unwrap(), "IC".to_string());
+    }
+}
+
+fn to_arabic(roman: String) -> Result<u64, Box<dyn Error>> {
     let roman = roman.to_ascii_uppercase();
     if roman.is_empty() {
         return Err("Invalid empty string".into());
@@ -76,11 +139,14 @@ fn convert(roman: String) -> Result<u64, Box<dyn Error>> {
             // Having two subtraction in a row is illegal
             return Err("Invalid sequence".into());
         } else if buffer.iter().all(|&item| item == current) {
+            // Having four additions in a row is illegal
             return Err("Invalid sequence".into());
         } else if current == buffer[2] && (current == 50 || current == 500) {
+            // Having two consecutive L or D is illegal
             return Err("Invalid sequence".into());
         } else if current < buffer[2] {
             if buffer[2] - current == current {
+                // Having a subtraction that does nothing is illegal
                 return Err("Invalid sequence".into());
             }
             value -= current;
@@ -91,49 +157,35 @@ fn convert(roman: String) -> Result<u64, Box<dyn Error>> {
     Ok(value)
 }
 
-fn main() {
-    let mut iter = env::args().skip(1).take(1);
-    let input: String;
-    match iter.next() {
-        Some(val) => input = val,
-        None => return,
-    };
-
-    match convert(input) {
-        Ok(val) => println!("{}", val),
-        Err(e) => println!("{}", e),
-    };
-}
-
 #[cfg(test)]
-mod tests {
-    use super::*;
+mod test_to_arabic {
+    use super::to_arabic;
 
     #[test]
     fn test_string_cases() {
-        let x = convert("iv".to_string());
+        let x = to_arabic("iv".to_string());
         assert!(x.is_ok());
         assert_eq!(x.unwrap(), 4);
 
-        let x = convert("LIX".to_string());
+        let x = to_arabic("LIX".to_string());
         assert!(x.is_ok());
         assert_eq!(x.unwrap(), 59);
 
-        let x = convert("CvL".to_string());
+        let x = to_arabic("CvL".to_string());
         assert!(x.is_ok());
         assert_eq!(x.unwrap(), 145);
     }
 
     #[test]
     fn test_empty_input() {
-        let x = convert(String::new());
+        let x = to_arabic(String::new());
         assert!(x.is_err());
         assert_eq!(format!("{:?}", x), "Err(\"Invalid empty string\")");
     }
 
     #[test]
     fn test_invalid_characters() {
-        let x = convert("LXS".to_string());
+        let x = to_arabic("LXS".to_string());
         assert!(x.is_err());
         assert_eq!(
             format!("{:?}", x),
@@ -142,81 +194,117 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_input_range() {
-        let x = convert("XIL".to_string());
+    fn test_invalid_inputs() {
+        let x = to_arabic("XIL".to_string());
         assert!(x.is_err());
         assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
 
-        let x = convert("VIL".to_string());
+        let x = to_arabic("VIL".to_string());
         assert!(x.is_err());
         assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
 
-        let x = convert("IXC".to_string());
+        let x = to_arabic("IXC".to_string());
         assert!(x.is_err());
         assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
 
-        let x = convert("XXC".to_string());
+        let x = to_arabic("XXC".to_string());
         assert!(x.is_err());
         assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
 
-        let x = convert("LC".to_string());
+        let x = to_arabic("LC".to_string());
+        assert!(x.is_err());
+        assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
+
+        let x = to_arabic("LDVX".to_string());
+        assert!(x.is_err());
+        assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
+
+        let x = to_arabic("XCIX".to_string());
         assert!(x.is_err());
         assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
     }
 
     #[test]
-    fn test_valid_input_range() {
-        let x = convert("XCIX".to_string());
+    fn test_valid_inputs() {
+        let x = to_arabic("XCIX".to_string());
         assert_eq!(x.unwrap(), 99);
 
-        let x = convert("MCMLXXXIV".to_string());
+        let x = to_arabic("MCMLXXXIV".to_string());
         assert_eq!(x.unwrap(), 1984);
 
-        let x = convert("MMMCMXCIX".to_string());
+        let x = to_arabic("MMMCMXCIX".to_string());
         assert_eq!(x.unwrap(), 3999);
 
-        let x = convert("LXXX".to_string());
+        let x = to_arabic("LXXX".to_string());
         assert_eq!(x.unwrap(), 80);
     }
 
     #[test]
     fn test_four_same_symbols() {
-        let x = convert("IIII".to_string());
+        let x = to_arabic("IIII".to_string());
         assert_eq!(x.unwrap(), 4);
 
-        let x = convert("XXXX".to_string());
+        let x = to_arabic("XXXX".to_string());
         assert!(x.is_err());
         assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
 
-        let x = convert("VIIII".to_string());
+        let x = to_arabic("VIIII".to_string());
         assert!(x.is_err());
         assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
     }
 
     #[test]
     fn test_double_symbols() {
-        let x = convert("MM".to_string());
+        let x = to_arabic("MM".to_string());
         assert!(x.is_ok());
         assert_eq!(x.unwrap(), 2000);
 
-        let x = convert("CC".to_string());
+        let x = to_arabic("CC".to_string());
         assert!(x.is_ok());
         assert_eq!(x.unwrap(), 200);
 
-        let x = convert("XX".to_string());
+        let x = to_arabic("XX".to_string());
         assert!(x.is_ok());
         assert_eq!(x.unwrap(), 20);
 
-        let x = convert("II".to_string());
+        let x = to_arabic("II".to_string());
         assert!(x.is_ok());
         assert_eq!(x.unwrap(), 2);
 
-        let x = convert("LL".to_string());
+        let x = to_arabic("LL".to_string());
         assert!(x.is_err());
         assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
 
-        let x = convert("DD".to_string());
+        let x = to_arabic("DD".to_string());
         assert!(x.is_err());
         assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
     }
+}
+
+fn main() {
+    let mut iter = env::args().skip(1).take(1);
+    let input: String;
+    match iter.next() {
+        Some(val) => input = val,
+        None => return,
+    };
+
+    let is_arabic: bool = match input.parse::<u64>() {
+        Ok(_) => true,
+        Err(_) => false,
+    };
+
+    let ret: String;
+    if is_arabic {
+        ret = match to_roman(input.parse::<u64>().unwrap()) {
+            Ok(val) => val,
+            Err(e) => e.to_string(),
+        };
+    } else {
+        ret = match to_arabic(input) {
+            Ok(val) => val.to_string(),
+            Err(e) => e.to_string(),
+        };
+    }
+    println!("{}", ret);
 }
