@@ -47,7 +47,7 @@ lazy_static! {
     .cloned()
     .collect();
     static ref NUMERALS: BTreeSet<char> = ROMAN_TO_ARABIC.keys().cloned().collect();
-    static ref ARABIC_TO_ROMAN: Vec<(u64, &'static str)> = vec![
+    static ref ARABIC_TO_ASCII: Vec<(u64, &'static str)> = vec![
         (1000, "M"),
         (900, "CM"),
         (500, "D"),
@@ -62,9 +62,30 @@ lazy_static! {
         (4, "IV"),
         (1, "I"),
     ];
+    static ref ARABIC_TO_UNICODE: Vec<(u64, &'static str)> = vec![
+        (1000, "Ⅿ"),
+        (900, "ⅭⅯ"),
+        (500, "Ⅾ"),
+        (400, "ⅭⅮ"),
+        (100, "Ⅽ"),
+        (90, "ⅩⅭ"),
+        (50, "Ⅼ"),
+        (40, "ⅩⅬ"),
+        (11, "Ⅺ"),
+        (10, "Ⅹ"),
+        (9, "Ⅸ"),
+        (8, "Ⅷ"),
+        (7, "Ⅶ"),
+        (6, "Ⅵ"),
+        (5, "V"),
+        (4, "Ⅳ"),
+        (3, "Ⅲ"),
+        (2, "Ⅱ"),
+        (1, "Ⅰ"),
+    ];
 }
 
-pub fn to_roman(input: u64) -> Result<String, Box<dyn Error>> {
+pub fn to_roman(input: u64, use_unicode: bool) -> Result<String, Box<dyn Error>> {
     let mut input = input;
     if input < 1 || input > 3999 {
         return Err(format!(
@@ -73,8 +94,13 @@ pub fn to_roman(input: u64) -> Result<String, Box<dyn Error>> {
         )
         .into());
     }
+
+    let list = match use_unicode {
+        true => ARABIC_TO_UNICODE.to_vec(),
+        false => ARABIC_TO_ASCII.to_vec(),
+    };
     let mut ret = String::new();
-    for (arabic, roman) in ARABIC_TO_ROMAN.iter() {
+    for (arabic, roman) in list.iter() {
         while input % arabic < input {
             ret += roman;
             input -= arabic;
@@ -144,26 +170,29 @@ mod test_to_roman {
 
     #[test]
     fn test_invalid_inputs() {
-        let x = to_roman(0u64);
+        let x = to_roman(0u64, false);
         assert!(x.is_err());
 
-        let x = to_roman(1u64);
+        let x = to_roman(1u64, true);
         assert!(x.is_ok());
 
-        let x = to_roman(3999u64);
+        let x = to_roman(3999u64, false);
         assert!(x.is_ok());
 
-        let x = to_roman(4000u64);
+        let x = to_roman(4000u64, true);
         assert!(x.is_err());
     }
 
     #[test]
     fn test_valid_inputs() {
-        let x = to_roman(1999u64);
+        let x = to_roman(1999u64, false);
         assert_eq!(x.unwrap(), "MCMXCIX".to_string());
 
-        let x = to_roman(99u64);
+        let x = to_roman(99u64, false);
         assert_eq!(x.unwrap(), "XCIX".to_string());
+
+        let x = to_roman(1999, true);
+        assert_eq!(x.unwrap(), "ⅯⅭⅯⅩⅭⅨ");
     }
 }
 
@@ -173,7 +202,6 @@ mod test_to_arabic {
 
     #[test]
     fn test_string_cases() {
-        // ASCII
         let x = to_arabic("iv".to_string());
         assert!(x.is_ok());
         assert_eq!(x.unwrap(), 4);
@@ -185,8 +213,9 @@ mod test_to_arabic {
         let x = to_arabic("CvL".to_string());
         assert!(x.is_ok());
         assert_eq!(x.unwrap(), 145);
-
-        // Unicode
+    }
+    #[test]
+    fn test_unicode_cases() {
         let x = to_arabic("ⅳ".to_string());
         assert!(x.is_ok());
         assert_eq!(x.unwrap(), 4);
