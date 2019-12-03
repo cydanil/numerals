@@ -1,19 +1,22 @@
-// Convert roman numerals to arabic, and vice-versa.
-//
-// There are a few rules to observe in checking the validity of a roman number:
-// - Having two subtraction in a row is illegal:
-//      IXC does not equal 91 (C - (X - I))
-// - Having four similar numerals in a row is illegal:
-//      400 should be written as CD (D - C), rather than CCCC
-// - But IIII is fine:
-//      This is typically used by watchmakers to make the reading of the number
-//      4 easy to read upside down.
-// - Only I, X, C, and M are allowed to be represented several times in a row:
-//      LL should be C; DD should be M
-// - If a certain sequence can be represented with another symbol, it is illegal:
-//      LC should be L;
-//
-// Although unicode caracter exist, Apostrophus and Vinculum are not supported.
+/*!
+Convert roman numerals to arabic, and vice-versa.
+
+This module provides two functions to convert to and from roman numerals.
+There are a few rules to observe in checking the validity of a roman number:
+    - Having two subtraction in a row is illegal:
+          IXC does not equal 91 (C - (X - I))
+    - Having four similar numerals in a row is illegal:
+        400 should be written as CD (D - C), rather than CCCC
+    - But IIII is fine:
+        This is typically used by watchmakers to make the reading of the number
+        4 easy to read upside down.
+    - Only I, X, C, and M are allowed to be represented several times in a row:
+        LL should be C; DD should be M
+    - If a certain sequence can be represented with another symbol, it is illegal:
+        LC should be L;
+
+Although unicode caracters exist, Apostrophus and Vinculum are not fully supported.
+*/
 
 use std::collections::{BTreeSet, HashMap, VecDeque};
 use std::error::Error;
@@ -28,6 +31,7 @@ lazy_static! {
         ('V', 5),  // ascii
         ('Ⅴ', 5),  // unicode
         ('Ⅵ', 6),
+        ('ↅ', 6),
         ('Ⅶ', 7),
         ('Ⅷ', 8),
         ('Ⅸ', 9),
@@ -36,12 +40,18 @@ lazy_static! {
         ('Ⅺ', 11),
         ('L', 50),  // ascii
         ('Ⅼ', 50),  // unicode
+        ('ↆ', 50),
         ('C', 100),  // ascii
         ('Ⅽ', 100),  // unicode
         ('D', 500),  // ascii
         ('Ⅾ', 500),  // unicode
         ('M', 1000),  // ascii
         ('Ⅿ', 1000),  // unicode
+        ('ↀ', 1000),
+        ('ↁ', 5000),
+        ('ↂ', 10000),
+        ('ↇ', 50000),
+        ('ↈ', 100000),
     ]
     .iter()
     .cloned()
@@ -71,16 +81,10 @@ lazy_static! {
         (90, "ⅩⅭ"),
         (50, "Ⅼ"),
         (40, "ⅩⅬ"),
-        (11, "Ⅺ"),
         (10, "Ⅹ"),
-        (9, "Ⅸ"),
-        (8, "Ⅷ"),
-        (7, "Ⅶ"),
-        (6, "Ⅵ"),
+        (9, "ⅠⅩ"),
         (5, "V"),
-        (4, "Ⅳ"),
-        (3, "Ⅲ"),
-        (2, "Ⅱ"),
+        (4, "ⅠV"),
         (1, "Ⅰ"),
     ];
 }
@@ -192,7 +196,7 @@ mod test_to_roman {
         assert_eq!(x.unwrap(), "XCIX".to_string());
 
         let x = to_roman(1999, true);
-        assert_eq!(x.unwrap(), "ⅯⅭⅯⅩⅭⅨ");
+        assert_eq!(x.unwrap(), "ⅯⅭⅯⅩⅭⅠⅩ");
     }
 }
 
@@ -327,5 +331,22 @@ mod test_to_arabic {
         let x = to_arabic("DD".to_string());
         assert!(x.is_err());
         assert_eq!(format!("{:?}", x), "Err(\"Invalid sequence\")");
+    }
+
+    #[test]
+    fn test_apostrohpus() {
+        let x = to_arabic("ↀ".to_string());
+        assert!(x.is_ok());
+        assert_eq!(x.unwrap(), 1000);
+
+        let x = to_arabic("ↀXↀIX".to_string());
+        assert!(x.is_ok());
+        assert_eq!(x.unwrap(), 1999);
+
+        let x = to_arabic("ↈIXC".to_string());
+        assert!(x.is_err());
+
+        let x = to_arabic("ↈⅠV".to_string());
+        assert_eq!(x.unwrap(), 100004);
     }
 }
