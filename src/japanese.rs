@@ -63,7 +63,7 @@ lazy_static! {
     .collect();
 }
 
-pub fn to_japanese(input: u64) -> String {
+pub fn to_kanji(input: u64) -> String {
     if input == 0 {
         return "零".into();
     }
@@ -99,20 +99,21 @@ pub fn to_japanese(input: u64) -> String {
 }
 
 #[cfg(test)]
-mod test_to_japanese {
-    use crate::japanese::to_japanese;
+mod test_to_kanji {
+    use crate::japanese::to_kanji;
 
     #[test]
     fn test_valid_inputs() {
-        assert_eq!("零", to_japanese(0));
-        assert_eq!("一", to_japanese(1));
-        assert_eq!("千九百九十四", to_japanese(1994));
-        assert_eq!("万千百十一", to_japanese(11111));
-        assert_eq!("十万", to_japanese(100000));
-        assert_eq!("千兆六十五万", to_japanese(1000000000650000));
+        assert_eq!("零", to_kanji(0));
+        assert_eq!("一", to_kanji(1));
+        assert_eq!("千九百九十四", to_kanji(1994));
+        assert_eq!("万千百十一", to_kanji(11111));
+        assert_eq!("十万", to_kanji(100000));
+        assert_eq!("十万五十", to_kanji(100050));
+        assert_eq!("千兆六十五万", to_kanji(1000000000650000));
         assert_eq!(
             "千八百四十四万六千七百四十四兆七百三十七億九百五十五万千六百十六",
-            to_japanese(std::u64::MAX)
+            to_kanji(std::u64::MAX)
         );
     }
 }

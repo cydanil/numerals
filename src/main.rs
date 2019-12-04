@@ -3,6 +3,7 @@ extern crate lazy_static;
 use std::env;
 
 mod roman;
+mod japanese;
 use crate::roman::{to_arabic, to_roman};
 
 fn main() {
@@ -17,6 +18,7 @@ fn main() {
     }
 
     if input.is_empty() {
+        japanese::to_kanji(1994);
         return;
     }
 
